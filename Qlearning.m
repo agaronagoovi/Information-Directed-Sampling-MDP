@@ -14,8 +14,7 @@ initState = 1;
 for e=1:NUM_EPISODES
     state = initState;
     for i=1:epLength
-        action = behaviorPolicy(q,state);
-        [nextState,reward] = observe(state,action);
+        [action,nextState,reward,paramBelief] = behaviorPolicy(q,state,paramBelief,DISCOUNT);
         q(state,action) = q(state,action) + UPDATE_PARAM*(reward+DISCOUNT*max(q(nextState,:))-q(nextState,action));
         state=nextState;
     end
