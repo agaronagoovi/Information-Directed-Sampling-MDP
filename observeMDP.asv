@@ -1,10 +1,19 @@
-function [ output_args ] = observeMDP( state, action )
+function [ nextState,rssa,pssa ] = observeMDP( state,action,Pssa,L )
 %OBSERVEMDP Summary of this function goes here
 % y -> number of units scrapped
 % b -> minimum bid
 % s-> revenue per unit of the units scrapped
 
 
-
+nextState = [];
+for i=1:size(Pssa,3)
+    for j=1:size(Pssa,2)
+        pssa(i,j) = Pssa(state,j,i);
+        rssa(
+    end
+    if pssa(i,j)>0
+        nextState = [nextState;i];
+    end
+end
 end
 
