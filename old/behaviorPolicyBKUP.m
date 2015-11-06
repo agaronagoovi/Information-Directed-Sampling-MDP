@@ -64,16 +64,16 @@ initPolicy = 1/size(q,2) * ones(size(q,2),1);
 options = optimoptions('fmincon','Display','off');
 policy = fmincon(obj,initPolicy,A,b,Aeq,beq,lb,ub,[],options);
 action = sample(policy,1);
-pssa = zeros(size(q,1),1);
 
 for p=1:length(param)
     %[Pssa,L] = makeMDP(param(p));
     Pssa = MDPs{p,1};
-    for j=1:size(q,1)
-        pssa(j) = Pssa(state,j,action);
+    L = MDPs{p,2};
+    [nextState,rssa,pssa] = observeMDP(state,action,Pssa,L);
+    if length(nextState)>1
+        nextState = sample(pssa(action,:),1);
     end
-    nextState = sample(pssa,1);
-    posterior(p) = pssa(nextState)*prior(p);
+    posterior(p) = pssa(action,nextState)*prior(p);
 end
 
 posterior = posterior/sum(posterior);

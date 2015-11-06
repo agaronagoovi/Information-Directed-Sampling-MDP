@@ -13,7 +13,7 @@ for i=1:size(Pssa,2)
         pssa(j,i) = Pssa(state,i,j);
         rssa(j,i) = L(i);
     end
-    if pssa(i,action)>0
+    if pssa(action,i)>0
         nextState = [nextState;i];
     end
 end

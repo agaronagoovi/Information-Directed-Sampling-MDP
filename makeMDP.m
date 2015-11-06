@@ -5,12 +5,12 @@ mqlength = 5;
 nu = 3;
 nx = (mqlength+1)^3;
 global l1 l2 m1 m2 m3;
-l1 = lParam;
+l1 = 1;
 l2 = 1;
 m1 = 2;
-m2 = m1;
+m2 = lParam;
 m3 = 3;
-c = [1;1;10];
+c = [-1;-1;-10];
 global m_rate;
 m_rate = l1+l2+m1+m2+m3;
 alpha = 0.98;
@@ -113,15 +113,7 @@ for q1=0:mqlength
                 ns = addr(x1,x2+1,x3,mqlength);
                 [Pssa(s,ns,u),Pssa(s,s,u)] = uniformization(rate,p_q2next,pself);
             end
-            if x2~=1
-                ns = addr(x1,x2-1,x3,mqlength);
-                [Pssa(s,ns,u),Pssa(s,s,u)] = uniformization(rate,p_q2previous,pself);
-            end
             
-            if x3~=mqlength+1
-                ns = addr(x1,x2,x3+1,mqlength);
-                [Pssa(s,ns,u),Pssa(s,s,u)] = uniformization(rate,p_q3next,pself);
-            end
             if x3~=1
                 ns = addr(x1,x2,x3-1,mqlength);
                 [Pssa(s,ns,u),Pssa(s,s,u)] = uniformization(rate,p_q3previous,pself);
@@ -147,47 +139,54 @@ for q1=0:mqlength
                     p_q1next = l1/(l1+l2+m3);
                     p_q2next = l2/(l1+l2+m3);
                     p_q3previous = m3/(l1+l2+m3);
-                elseif q2~=0 && q3==0
+                elseif q2~=0 && q3==0                       %constraint q2 previous and q3 next
                     if q2~=mqlength
-                        rate = l1 + l2 + m2;
-                        p_q1next = l1/(l1+l2+m2);
-                        p_q2next = l2/(l1+l2+m2);
-                        p_q2previous = m2/(l1+l2+m2);
                         if q3~=mqlength
+                            rate = l1 + l2 + m2;
+                            p_q1next = l1/(l1+l2+m2);
+                            p_q2next = l2/(l1+l2+m2);
+                            p_q2previous = m2/(l1+l2+m2);
                             p_q3next=1;
                         else
-                            p_q3next=0;
+                            rate = l1 + l2;
+                            p_q1next = l1/(l1+l2);
+                            p_q2next = l2/(l1+l2);
                         end
                     else
-                        rate = m2 + l1;
-                        p_q1next = l1/(l1+m2);
-                        p_q2previous = m2/(l1+m2);
                         if q3~=mqlength
+                            rate = l1+ m2;
+                            p_q1next = l1/(l1+m2);
+                            p_q2next = l2/(l1+m2);
+                            p_q2previous = m2/(l1+m2);
                             p_q3next=1;
                         else
-                            p_q3next=0;
+                            rate = l1;
+                            p_q1next = 1;
                         end
                     end
                 else
                     if q2~=mqlength
-                        rate = l1 + l2 + m2 + m3;
-                        p_q1next = l1/(l1+l2+m2+m3);
-                        p_q2next = l2/(l1+l2+m2+m3);
-                        p_q2previous = m2/(l1+l2+m2+m3);
                         if q3~=mqlength
+                            rate = l1 + l2 + m2 + m3;
+                            p_q1next = l1/(l1+l2+m2+m3);
+                            p_q2next = l2/(l1+l2+m2+m3);
+                            p_q2previous = m2/(l1+l2+m2+m3);
                             p_q3next=1;
                         else
-                            p_q3next=0;
+                            rate = l1 + l2 + m3;
+                            p_q1next = l1/(l1+l2+m3);
+                            p_q2next = l2/(l1+l2+m3);
                         end
                         p_q3previous = m3/(l1+l2+m2+m3);
                     else
-                        rate = l1 + m2 + m3;
-                        p_q1next = l1/(l1+m2+m3);
-                        p_q2previous = m2/(l1+m2+m3);
                         if q3~=mqlength
+                            rate = l1 + m2 + m3;
+                            p_q1next = l1/(l1+m2+m3);
+                            p_q2previous = m2/(l1+m2+m3);
                             p_q3next=1;
                         else
-                            p_q3next=0;
+                            rate = l1 + m3;
+                            p_q1next = l1/(l1+m3);
                         end
                         p_q3previous = m3/(l1+m2+m3);
                     end
@@ -202,41 +201,43 @@ for q1=0:mqlength
                     p_q3previous = m3/(l2+m3);
                 elseif q2~=0 && q3==0
                     if q2~=mqlength
-                        rate = l2 + m2;
-                        p_q2next = l2/(l2+m2);
-                        p_q2previous = m2/(l2+m2);
                         if q3~=mqlength
+                            rate = l2 + m2;
+                            p_q2next = l2/(l2+m2);
+                            p_q2previous = m2/(l2+m2);
                             p_q3next=1;
                         else
-                            p_q3next=0;
+                            rate = l2;
+                            p_q2next = 1;
                         end
                     else
-                        rate = m2;
-                        p_q2previous = 1;
                         if q3~=mqlength
+                            rate = m2;
+                            p_q2previous = 1;
                             p_q3next=1;
                         else
-                            p_q3next=0;
+                            rate = 0;
                         end
                     end
                 else
                     if q2~=mqlength
-                        rate = l2 + m2 + m3;
-                        p_q2next = l2/(l2+m2+m3);
-                        p_q2previous = m2/(l2+m2+m3);
                         if q3~=mqlength
+                            rate = l2 + m2 + m3;
+                            p_q2next = l2/(l2+m2+m3);
+                            p_q2previous = m2/(l2+m2+m3);
                             p_q3next=1;
                         else
-                            p_q3next=0;
+                            rate = l2 + m3;
+                            p_q2next = l2/(l2+m3);
                         end
                         p_q3previous = m3/(l2+m2+m3);
                     else
-                        rate = m2 + m3;
-                        p_q2previous = m2/(m2+m3);
                         if q3~=mqlength
+                            rate = m2 + m3;
+                            p_q2previous = m2/(m2+m3);
                             p_q3next=1;
                         else
-                            p_q3next=0;
+                            rate = m3;
                         end
                         p_q3previous = m3/(m2+m3);
                     end
@@ -252,10 +253,6 @@ for q1=0:mqlength
                 ns = addr(x1+1,x2,x3,mqlength);
                 [Pssa(s,ns,u),Pssa(s,s,u)] = uniformization(rate,p_q1next,pself);
             end
-            if x1~=1
-                ns = addr(x1-1,x2,x3,mqlength);
-                [Pssa(s,ns,u),Pssa(s,s,u)] = uniformization(rate,p_q1previous,pself);
-            end
             
             if x2~=mqlength+1
                 ns = addr(x1,x2+1,x3,mqlength);
@@ -269,9 +266,9 @@ for q1=0:mqlength
             if x3~=mqlength+1 && x2~=1
                 ns = addr(x1,x2-1,x3+1,mqlength);
                 [Pssa(s,ns,u),Pssa(s,s,u)] = uniformization(rate,p_q3next*p_q2previous,pself);
-            elseif x3==mqlength+1 && x2~=1
-                ns = addr(x1,x2-1,x3,mqlength);
-                [Pssa(s,ns,u),Pssa(s,s,u)] = uniformization(rate,p_q2previous,pself);
+%             elseif x3==mqlength+1 && x2~=1
+%                 ns = addr(x1,x2,x3,mqlength);
+%                 [Pssa(s,ns,u),Pssa(s,s,u)] = uniformization(rate,p_q2previous,pself);
             end
             if x3~=1
                 ns = addr(x1,x2,x3-1,mqlength);
@@ -336,24 +333,12 @@ for q1=0:mqlength
                 ns = addr(x1+1,x2,x3,mqlength);
                 [Pssa(s,ns,u),Pssa(s,s,u)] = uniformization(rate,p_q1next,pself);
             end
-            if x1~=1
-                ns = addr(x1-1,x2,x3,mqlength);
-                [Pssa(s,ns,u),Pssa(s,s,u)] = uniformization(rate,p_q1previous,pself);
-            end
             
             if x2~=mqlength+1
                 ns = addr(x1,x2+1,x3,mqlength);
                 [Pssa(s,ns,u),Pssa(s,s,u)] = uniformization(rate,p_q2next,pself);
             end
-            if x2~=1
-                ns = addr(x1,x2-1,x3,mqlength);
-                [Pssa(s,ns,u),Pssa(s,s,u)] = uniformization(rate,p_q2previous,pself);
-            end
-            
-            if x3~=mqlength+1
-                ns = addr(x1,x2,x3+1,mqlength);
-                [Pssa(s,ns,u),Pssa(s,s,u)] = uniformization(rate,p_q3next,pself);
-            end
+
             if x3~=1
                 ns = addr(x1,x2,x3-1,mqlength);
                 [Pssa(s,ns,u),Pssa(s,s,u)] = uniformization(rate,p_q3previous,pself);

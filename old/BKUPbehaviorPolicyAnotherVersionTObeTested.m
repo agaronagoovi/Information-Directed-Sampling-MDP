@@ -4,8 +4,8 @@ function [ action,posterior ] = behaviorPolicy( MDPs,q,state,prior,DISCOUNT,para
 
 expRegret = zeros(size(q,2),1);
 posterior = zeros(length(param),1);
-tempjointProb = zeros(1,4);
-joinProbIter=0;
+jointProb = zeros(size(q,2),size(q,1),length(param));
+probTran = zeros(size(q,2),size(q,1));
 probOptimPolicy = prior;
 for p=1:length(param)
     %[Pssa,L] = makeMDP(param(p));
@@ -14,11 +14,14 @@ for p=1:length(param)
     tempOptimalValueBelief=zeros(size(q,2),1);
     policyValueBelief = zeros(size(q,2),1);
     for i=1:size(q,2)
-        [nextState,rssa,pssa] = observeMDP(state,i,Pssa,L);
-        for j=1:size(nextState)
-            tempOptimalValueBelief(i) = tempOptimalValueBelief(i) + pssa(i,nextState(j))*(rssa(i,nextState(j)) + DISCOUNT*max(q(nextState(j),:)));
-            joinProbIter=joinProbIter+1;
-            tempjointProb(joinProbIter,:) = [p,i,nextState(j),pssa(i,nextState(j))*prior(p)];
+        for j=1:size(q,1)
+            pssa = Pssa(state,j,i);
+            rssa = L(j);
+            if pssa~=0
+                tempOptimalValueBelief(i) = tempOptimalValueBelief(i) + pssa*(rssa + DISCOUNT*max(q(j,:)));
+                jointProb(i,j,p) = pssa*prior(p);
+                probTran(i,j) = probTran(i,j) + jointProb(i,j,p);
+            end
         end
         policyValueBelief(i) = tempOptimalValueBelief(i);
     end
@@ -29,26 +32,14 @@ for p=1:length(param)
         expRegret(i) = expRegret(i) + prior(p)*regret;
     end
 end
-PossNextStates = unique(tempjointProb(:,3));
-probTran = zeros(size(q,2),length(PossNextStates));
+
 g = zeros(size(q,2),1);
 for i=1:size(q,2)
-    temp = find(tempjointProb(:,2)==i);       %next states index for given action
-    for j=1:length(PossNextStates)
-        temp2 = tempjointProb(temp,3)==PossNextStates(j);     %index for given next state and action
-        idx = temp(temp2);
-        if isempty(idx)
-            continue;
-        end
-        probTran(i,j) = sum(tempjointProb(idx,4));
+    for j=1:size(q,1)
         for p=1:length(param)
-            idx2 = idx(tempjointProb(idx,1)==p);
-            if isempty(idx2)
-                continue;
-            end
-            jointProb = max(tempjointProb(idx2,4),eps);
+            tempjointProb = max(jointProb(i,j,p),eps);
             probMult = max(probOptimPolicy(p)*probTran(i,j),eps);
-            g(i) = g(i) + jointProb*log(jointProb/probMult);
+            g(i) = g(i) + tempjointProb*log(tempjointProb/probMult);
         end
     end
 end
