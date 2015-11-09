@@ -1,20 +1,19 @@
-function [ action,posterior ] = behaviorPolicy( MDPs,q,state,prior,DISCOUNT,param )
+function [ action ] = behaviorPolicy( MDPs,q,state,prior,DISCOUNT,param )
 %BEHAVIORPOLICY Summary of this function goes here
 %   Detailed explanation goes here
 
 expRegret = zeros(size(q,2),1);
-posterior = zeros(length(param),1);
 tempjointProb = zeros(1,4);
 joinProbIter=0;
 probOptimPolicy = prior;
 for p=1:length(param)
     %[Pssa,L] = makeMDP(param(p));
     Pssa = MDPs{p,1};
-    L = MDPs{p,2};
+    Rssa = MDPs{p,2};
     tempOptimalValueBelief=zeros(size(q,2),1);
     policyValueBelief = zeros(size(q,2),1);
     for i=1:size(q,2)
-        [nextState,rssa,pssa] = observeMDP(state,i,Pssa,L);
+        [nextState,rssa,pssa] = observeMDP(state,i,Pssa,Rssa);
         for j=1:size(nextState)
             tempOptimalValueBelief(i) = tempOptimalValueBelief(i) + pssa(i,nextState(j))*(rssa(i,nextState(j)) + DISCOUNT*max(q(nextState(j),:)));
             joinProbIter=joinProbIter+1;
@@ -64,21 +63,6 @@ initPolicy = 1/size(q,2) * ones(size(q,2),1);
 options = optimoptions('fmincon','Display','off');
 policy = fmincon(obj,initPolicy,A,b,Aeq,beq,lb,ub,[],options);
 action = sample(policy,1);
-pssa = zeros(size(q,1),1);
-
-for p=1:length(param)
-    %[Pssa,L] = makeMDP(param(p));
-    Pssa = MDPs{p,1};
-    for j=1:size(q,1)
-        pssa(j) = Pssa(state,j,action);
-    end
-    nextState = sample(pssa,1);
-    posterior(p) = pssa(nextState)*prior(p);
-end
-
-posterior = posterior/sum(posterior);
-
-
 end
 
 
