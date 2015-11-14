@@ -1,11 +1,11 @@
 param = 1:10;
-MDPs = cell(length(param),2);
+MDPs = cell(length(param),1);
 
 for i=1:length(param)
-    [MDPs{i,1},MDPs{i,2}] = mdpAuctionWOscrap(param(i));
+    [MDPs{i,1}.ValueFunction,MDPs{i,1}.ScrapThreshold,MDPs{i,1}.minimumBid,MDPs{i,1}.Pssa] = valueIteration(param(i));
+    
 end
 
-initQ = zeros(size(MDPs{i,1},1),size(MDPs{i,1},3));
 pd = makedist('NegativeBinomial','R',5,'p',0.5);
 t = truncate(pd,1,length(param));
 conjugatePrior = pdf(t,1:length(param))';

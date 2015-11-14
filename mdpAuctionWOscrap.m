@@ -1,4 +1,4 @@
-function [ Pssa,Rssa ] = mdpAuction( p )
+function [ Pssa,Rssa ] = mdpAuctionWOscrap( p )
 %MDPAUCTION Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -12,14 +12,16 @@ totalStates = initInventory + 1;
 Pssa = zeros(totalStates,totalStates,length(actions));
 Rssa = zeros(totalStates,totalStates,length(actions));
 
+gamma = 0.98;
+
 
 Pssa(1,1,:) = 1;
 for i=2:totalStates   %state 1 -> 0 inventory
     for a=1:length(actions)
         Pssa(i,i,a) = q(actions(a));
         Pssa(i,i-1,a) = 1 - Pssa(i,i,a);
-        Rssa(i,i,a) = phi(actions(a));
-        Rssa(i,i-1,a) = Rssa(i,i,a);
+        Rssa(i,i,a) = 0;
+        Rssa(i,i-1,a) = 0.98*phi(actions(a));
     end
 end
         
