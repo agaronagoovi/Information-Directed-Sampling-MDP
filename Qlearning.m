@@ -2,15 +2,15 @@ function [ q, paramBelief ] = Qlearning( MDPs,initQ,param,conjugatePrior )
 %QLEARNING Summary of this function goes here
 %   Detailed explanation goes here
 
-trueMDP_Pssa = MDPs{9,1};
-trueMDP_L = MDPs{9,2};
+trueMDP_Pssa = MDPs{7,1};
+trueMDP_L = MDPs{7,2};
 
 
 q = initQ;
 
-NUM_EPISODES = 50;
+NUM_EPISODES = 10000;
 UPDATE_PARAM = 0.01;
-DISCOUNT=0.98;
+DISCOUNT=0.90;
 
 paramBelief = conjugatePrior;
 
@@ -29,7 +29,8 @@ paramBelief'
 %     flag = 1;
 % end
 %%%%%%End Debug Code%%%%
-    state = initState;
+    %state = initState;
+    state = sample(1/10*(ones(10,1)),1) + 11;
     if ~flagGoal
         for i=1:epLength
             action = behaviorPolicy(MDPs,q,state,paramBelief,DISCOUNT,param);

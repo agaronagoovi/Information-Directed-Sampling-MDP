@@ -1,0 +1,157 @@
+function [ policy, paramBelief ] = valueIterationLearning( MDPs,param,conjugatePrior )
+%QLEARNING Summary of this function goes here
+%   Detailed explanation goes here
+
+MDPs = generateValueFunctions( MDPs,param );
+
+trueMDP_Pssa = MDPs{7}.Pssa;
+trueMDP_Rssa = MDPs{7}.Rssa;
+
+
+DISCOUNT=0.90;
+NUM_EPISODES = 50;
+paramBelief = conjugatePrior;
+
+epLength = 100;
+initState = 21;
+
+flagGoal = 1;
+goalState = 1;
+
+numActions = size(MDPs{1}.Pssa,3);
+numStates = size(MDPs{1}.Pssa,2);
+
+policy = zeros(numStates,numActions);
+
+
+for e=1:NUM_EPISODES
+e
+paramBelief'
+%%%%%Debug Code%%%%%%
+% if e>=12
+%     flag = 1;
+% end
+%%%%%%End Debug Code%%%%
+    state = initState;
+    if ~flagGoal
+        for i=1:epLength
+            [policy(state,:),action] = behaviorPolicyValue(MDPs,state,paramBelief,DISCOUNT,param);
+            %[ action ] = eOptimalPolicy( q,state );
+            [~,~,pssa] = observeMDP(state,action,trueMDP_Pssa,trueMDP_Rssa);
+            nextState = sample(pssa(action,:),1);
+            paramBelief = bayesUpdate(MDPs,numStates,param,paramBelief,state,action,nextState);
+            state=nextState;
+        end
+    else
+        for i=1:epLength
+            [policy(state,:),action] = behaviorPolicyValue(MDPs,state,paramBelief,DISCOUNT,param);
+            %[ action ] = eOptimalPolicy( q,state );
+            [~,~,pssa] = observeMDP(state,action,trueMDP_Pssa,trueMDP_Rssa);
+            nextState = sample(pssa(action,:),1);
+            paramBelief = bayesUpdate(MDPs,numStates,param,paramBelief,state,action,nextState);
+            state=nextState;
+            if state == goalState
+                break;
+            end 
+        end
+    end
+end
+
+end
+
+function posterior = bayesUpdate(MDPs,numStates,param,prior,state,action,nextState)
+
+
+posterior = zeros(length(param),1);
+pssa = zeros(numStates,1);
+
+for p=1:length(param)
+    %[Pssa,L] = makeMDP(param(p));
+    Pssa = MDPs{p}.Pssa;
+    for j=1:numStates
+        pssa(j) = Pssa(state,j,action);
+    end
+    posterior(p) = pssa(nextState)*prior(p);
+end
+
+posterior = posterior/sum(posterior);
+
+end
+
+
+function [ policy,action ] = behaviorPolicyValue( MDPs,state,prior,DISCOUNT,param )
+%BEHAVIORPOLICY Summary of this function goes here
+%   Detailed explanation goes here
+
+numActions = size(MDPs{1}.Pssa,3);
+expRegret = zeros(numActions,1);
+tempjointProb = zeros(1,4);
+joinProbIter=0;
+probOptimPolicy = prior;
+for p=1:length(param)
+    %[Pssa,L] = makeMDP(param(p));
+    Pssa = MDPs{p}.Pssa;
+	Rssa = MDPs{p}.Rssa;
+    v = MDPs{p}.ValueFunction;
+    policyValueBelief = zeros(numActions,1);
+    for i=1:numActions
+        [nextState,rssa,pssa] = observeMDP(state,i,Pssa,Rssa);
+        for j=1:size(nextState)
+            policyValueBelief(i) = policyValueBelief(i) + pssa(i,nextState(j))*(rssa(i,nextState(j)) + DISCOUNT*v(nextState(j)));
+            joinProbIter=joinProbIter+1;
+            tempjointProb(joinProbIter,:) = [p,i,nextState(j),pssa(i,nextState(j))*prior(p)];
+        end
+    end
+    optimalValueBelief = max(policyValueBelief);
+    
+    for i=1:numActions
+        regret = optimalValueBelief - policyValueBelief(i);
+        expRegret(i) = expRegret(i) + prior(p)*regret;
+    end
+end
+PossNextStates = unique(tempjointProb(:,3));
+probTran = zeros(numActions,length(PossNextStates));
+g = zeros(numActions,1);
+for i=1:numActions
+    temp = find(tempjointProb(:,2)==i);       %next states index for given action
+    for j=1:length(PossNextStates)
+        temp2 = tempjointProb(temp,3)==PossNextStates(j);     %index for given next state and action
+        idx = temp(temp2);
+        if isempty(idx)
+            continue;
+        end
+        probTran(i,j) = sum(tempjointProb(idx,4));
+        for p=1:length(param)
+            idx2 = idx(tempjointProb(idx,1)==p);
+            if isempty(idx2)
+                continue;
+            end
+            jointProb = max(tempjointProb(idx2,4),eps);
+            probMult = max(probOptimPolicy(p)*probTran(i,j),eps);
+            g(i) = g(i) + jointProb*log(jointProb/probMult);
+        end
+    end
+end
+            
+obj = @(policy) ids(policy,g,expRegret);
+Aeq = ones(1,numActions);
+beq = 1;
+A=[];
+b=[];
+lb=zeros(numActions,1);
+ub=ones(numActions,1);
+initPolicy = 1/numActions * ones(numActions,1);
+options = optimoptions('fmincon','Display','off');
+policy = fmincon(obj,initPolicy,A,b,Aeq,beq,lb,ub,[],options);
+action = sample(policy,1);
+end
+
+
+function [ val ] = ids(policy,g,expRegret)
+
+if max(g)==0 && min(g) ==0
+    val = (policy'*expRegret)^2;
+else
+    val = ((policy'*expRegret)^2)/(policy'*g)^2;
+end
+end
