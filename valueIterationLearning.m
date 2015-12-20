@@ -1,15 +1,13 @@
-function [ policy, paramBelief ] = valueIterationLearning( MDPs,param,conjugatePrior )
+function [ policy, paramBelief,reward,traj ] = valueIterationLearning( MDPs,param,conjugatePrior,trueMDPIdx )
 %QLEARNING Summary of this function goes here
 %   Detailed explanation goes here
 
-MDPs = generateValueFunctions( MDPs,param );
-
-trueMDP_Pssa = MDPs{7}.Pssa;
-trueMDP_Rssa = MDPs{7}.Rssa;
+trueMDP_Pssa = MDPs{trueMDPIdx}.Pssa;
+trueMDP_Rssa = MDPs{trueMDPIdx}.Rssa;
 
 
 DISCOUNT=0.90;
-NUM_EPISODES = 50;
+NUM_EPISODES = 100;
 paramBelief = conjugatePrior;
 
 epLength = 100;
@@ -22,7 +20,8 @@ numActions = size(MDPs{1}.Pssa,3);
 numStates = size(MDPs{1}.Pssa,2);
 
 policy = zeros(numStates,numActions);
-
+traj = zeros(NUM_EPISODES,epLength);
+reward = zeros(NUM_EPISODES,1);
 
 for e=1:NUM_EPISODES
 e
@@ -33,27 +32,19 @@ paramBelief'
 % end
 %%%%%%End Debug Code%%%%
     state = initState;
-    if ~flagGoal
-        for i=1:epLength
-            [policy(state,:),action] = behaviorPolicyValue(MDPs,state,paramBelief,DISCOUNT,param);
-            %[ action ] = eOptimalPolicy( q,state );
-            [~,~,pssa] = observeMDP(state,action,trueMDP_Pssa,trueMDP_Rssa);
-            nextState = sample(pssa(action,:),1);
-            paramBelief = bayesUpdate(MDPs,numStates,param,paramBelief,state,action,nextState);
-            state=nextState;
-        end
-    else
-        for i=1:epLength
-            [policy(state,:),action] = behaviorPolicyValue(MDPs,state,paramBelief,DISCOUNT,param);
-            %[ action ] = eOptimalPolicy( q,state );
-            [~,~,pssa] = observeMDP(state,action,trueMDP_Pssa,trueMDP_Rssa);
-            nextState = sample(pssa(action,:),1);
-            paramBelief = bayesUpdate(MDPs,numStates,param,paramBelief,state,action,nextState);
-            state=nextState;
-            if state == goalState
-                break;
-            end 
-        end
+    for i=1:epLength
+        traj(e,i) = state;
+        [policy(state,:),action] = behaviorPolicyValue(MDPs,state,paramBelief,DISCOUNT,param);
+        %[ action ] = eOptimalPolicy( q,state );
+        [~,rssa,pssa] = observeMDP(state,action,trueMDP_Pssa,trueMDP_Rssa);
+        nextState = sample(pssa(action,:),1);
+        %reward(i+1) = reward(i) + DISCOUNT^(i-1)*expStepReward(policy,pssa,rssa);
+        reward(e) = reward(e) + DISCOUNT^(i-1)*rssa(action,nextState);
+        paramBelief = bayesUpdate(MDPs,numStates,param,paramBelief,state,action,nextState);
+        state=nextState;
+        if state == goalState && flagGoal
+            break;
+        end 
     end
 end
 
@@ -78,6 +69,17 @@ posterior = posterior/sum(posterior);
 
 end
 
+function reward = expStepReward(policy,pssa,rssa)
+
+reward=0;
+
+for i=1:size(pssa,1)
+    for j=1:size(pssa,2)
+        reward = reward + pssa(i,j)*rssa(i,j);
+    end
+    reward = reward + policy(i)*reward;
+end
+end
 
 function [ policy,action ] = behaviorPolicyValue( MDPs,state,prior,DISCOUNT,param )
 %BEHAVIORPOLICY Summary of this function goes here
@@ -141,8 +143,10 @@ b=[];
 lb=zeros(numActions,1);
 ub=ones(numActions,1);
 initPolicy = 1/numActions * ones(numActions,1);
-options = optimoptions('fmincon','Display','off');
+options = optimoptions('fmincon','Display','off','MaxFunEvals',300000);
 policy = fmincon(obj,initPolicy,A,b,Aeq,beq,lb,ub,[],options);
+policy(policy<1e-5) = 0;
+policy = policy/sum(policy);
 action = sample(policy,1);
 end
 
@@ -152,6 +156,6 @@ function [ val ] = ids(policy,g,expRegret)
 if max(g)==0 && min(g) ==0
     val = (policy'*expRegret)^2;
 else
-    val = ((policy'*expRegret)^2)/(policy'*g)^2;
+    val = ((policy'*expRegret)^2)/(policy'*g);
 end
 end

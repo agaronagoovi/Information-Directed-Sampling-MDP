@@ -36,7 +36,7 @@ for i=2:totalStates   %state 1 -> 0 inventory
         x = a-initInventory;
         Pssa(i,i,a) = poisscdf(x,p);
         Pssa(i,i-x,a) = 1 - Pssa(i,i,a);
-        Rssa(i,i,a) = 0;
+        Rssa(i,i,a) = - h*i;
         Rssa(i,i-x,a) = phi(x) - h*i;
     end
     for a=initInventory+i:totalActions
