@@ -7,11 +7,11 @@ trueMDP_Rssa = MDPs{trueMDPIdx}.Rssa;
 
 
 DISCOUNT=0.90;
-NUM_EPISODES = 100;
+NUM_EPISODES = 10;
 paramBelief = conjugatePrior;
 
 epLength = 100;
-initState = 21;
+initState = 1;
 
 flagGoal = 1;
 goalState = 1;
@@ -34,7 +34,7 @@ paramBelief'
     state = initState;
     for i=1:epLength
         traj(e,i) = state;
-        [policy(state,:),action] = behaviorPolicyValue(MDPs,state,paramBelief,DISCOUNT,param);
+        [policy(state,:),action] = behaviorPolicyEntropy(MDPs,state,paramBelief,DISCOUNT,param);
         %[ action ] = eOptimalPolicy( q,state );
         [~,rssa,pssa] = observeMDP(state,action,trueMDP_Pssa,trueMDP_Rssa);
         nextState = sample(pssa(action,:),1);

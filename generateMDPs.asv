@@ -2,7 +2,7 @@ param = 5:5:50;
 MDPs = cell(length(param),2);
 
 for i=1:length(param)
-    [MDPs{i,1},MDPs{i,2}] = mdpDoseResponse(param(i));
+    [MDPs{i,1},MDPs{i,2}] = mdpDoseResponses(param(i));
 end
 
 initQ = zeros(size(MDPs{i,1},1),size(MDPs{i,1},3));
