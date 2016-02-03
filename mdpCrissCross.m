@@ -1,4 +1,4 @@
-function [ Pssa, L ] = makeMDP( lParam)
+function [ Pssa, Rssa ] = mdpCrissCross( lParam)
 %MAKEMDP Summary of this function goes here
 %   Detailed explanation goes here
 mqlength = 5;
@@ -346,6 +346,18 @@ for q1=0:mqlength
             
             Pssa(s,s,u) = uniformizationself(rate,pself);
             L(s) = c'*[q1;q2;q3]/(m_rate + alpha);
+        end
+    end
+end
+
+
+Rssa = zeros(nx,nx,nu);
+for i=1:nx
+    for j= 1:nx
+        for k=1:nu
+            if Pssa(i,j,k)~=0
+                Rssa(i,j,k) = L(i);
+            end
         end
     end
 end

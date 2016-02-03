@@ -11,7 +11,7 @@ NUM_EPISODES = 10;
 paramBelief = conjugatePrior;
 
 epLength = 100;
-initState = 1;
+initState = 60;
 
 flagGoal = 1;
 goalState = 1;
@@ -19,7 +19,8 @@ goalState = 1;
 numActions = size(MDPs{1}.Pssa,3);
 numStates = size(MDPs{1}.Pssa,2);
 
-policy = zeros(numStates,numActions);
+%policy = zeros(numStates,numActions);
+policy = zeros(NUM_EPISODES,epLength);
 traj = zeros(NUM_EPISODES,epLength);
 reward = zeros(NUM_EPISODES,1);
 
@@ -34,7 +35,9 @@ paramBelief'
     state = initState;
     for i=1:epLength
         traj(e,i) = state;
-        [policy(state,:),action] = behaviorPolicyEntropy(MDPs,state,paramBelief,DISCOUNT,param);
+        [~,action] = behaviorPolicyEntropy(MDPs,state,paramBelief,DISCOUNT,param);
+        policy(e,i) = action;
+        %[policy(state,:),action] = behaviorPolicyEntropy(MDPs,state,paramBelief,DISCOUNT,param);
         %[ action ] = eOptimalPolicy( q,state );
         [~,rssa,pssa] = observeMDP(state,action,trueMDP_Pssa,trueMDP_Rssa);
         nextState = sample(pssa(action,:),1);
