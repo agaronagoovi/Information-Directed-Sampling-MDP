@@ -3,22 +3,21 @@ function [ reward,paramBelief,temperature ] = averageRuns( valueMDPs,param,conju
 %   Detailed explanation goes here
 
 %temperature = [0,0.001,0.01,0.1,0.2,1,2];
-temperature = 0.1;
+temperature = [-1,0,0.1,1];
 paramBelief = zeros(length(temperature),length(param));
-reward = zeros(length(temperature),10);
+reward = zeros(length(temperature),1);
 
-NUMRUNS = 100;
 
 for k=1:length(temperature)
-    for i=1:NUMRUNS
+    for i=1:100
         [ ~, idsparamBelief,idsreward,~ ] = valueIterationLearning( valueMDPs,param,conjugatePrior,trueMDPIdx,temperature(k) );
         reward(k,:) = reward(k,:) + idsreward';
         paramBelief(k,:) = paramBelief(k,:) + idsparamBelief';
     end
 end
 
-reward = reward/NUMRUNS;
-paramBelief = paramBelief/NUMRUNS;
+reward = reward/100;
+paramBelief = paramBelief/100;
 
 end
 

@@ -1,4 +1,4 @@
-function [ policy,action ] = behaviorPolicyEntropy( MDPs,state,prior,DISCOUNT,param,k )
+function [ policy,action ] = behaviorPolicyEntropy_finite( MDPs,state,prior,step,param,k )
 %BEHAVIORPOLICY Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -16,7 +16,7 @@ for p=1:length(param)
     for i=1:numActions
         [nextState,rssa,pssa] = observeMDP(state,i,Pssa,Rssa);
         for j=1:size(nextState)
-            policyValueBelief(i) = policyValueBelief(i) + pssa(i,nextState(j))*(rssa(i,nextState(j)) + DISCOUNT*v(nextState(j)));
+            policyValueBelief(i) = policyValueBelief(i) + pssa(i,nextState(j))*(rssa(i,nextState(j)) + v(nextState(j),step+1));
             joinProbIter=joinProbIter+1;
             tempjointProb(joinProbIter,:) = [p,i,nextState(j),pssa(i,nextState(j))*prior(p)];
         end

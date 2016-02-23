@@ -1,4 +1,4 @@
-function [ policy, paramBelief,reward,traj ] = valueIterationLearning( MDPs,param,conjugatePrior,trueMDPIdx )
+function [ policy, paramBelief,reward,traj ] = valueIterationLearning( MDPs,param,conjugatePrior,trueMDPIdx,temperature )
 %QLEARNING Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -11,7 +11,7 @@ NUM_EPISODES = 10;
 paramBelief = conjugatePrior;
 
 epLength = 100;
-initState = 60;
+initState = 21;
 
 flagGoal = 1;
 goalState = 1;
@@ -25,8 +25,6 @@ traj = zeros(NUM_EPISODES,epLength);
 reward = zeros(NUM_EPISODES,1);
 
 for e=1:NUM_EPISODES
-e
-paramBelief'
 %%%%%Debug Code%%%%%%
 % if e>=12
 %     flag = 1;
@@ -35,7 +33,8 @@ paramBelief'
     state = initState;
     for i=1:epLength
         traj(e,i) = state;
-        [~,action] = behaviorPolicyEntropy(MDPs,state,paramBelief,DISCOUNT,param);
+        [~,action] = behaviorPolicyEntropy(MDPs,state,paramBelief,DISCOUNT,param,temperature);
+        %[~,action] = behaviorPolicyEntropy_finite(MDPs,state,paramBelief,i,param,temperature);
         policy(e,i) = action;
         %[policy(state,:),action] = behaviorPolicyEntropy(MDPs,state,paramBelief,DISCOUNT,param);
         %[ action ] = eOptimalPolicy( q,state );
@@ -49,6 +48,10 @@ paramBelief'
             break;
         end 
     end
+%     states = log(1:0.05:10);
+%     reward(e) = reward(e) - exp(states(state));
+    e
+    paramBelief'
 end
 
 end
